@@ -1,0 +1,41 @@
+<script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+    <df-messenger
+      intent="WELCOME"
+      chat-title="Text_chat_hotel1"
+      agent-id="893cca16-8b1c-4317-baea-6ff7a404160d"
+      language-code="vi"
+    ></df-messenger>
+    <!-- Phần Head -->
+    <header class="navbar d-flex align-items-center justify-content-between">
+        <h1 class="logo">Hotel Management</h1>
+        <a href="/" class="home-icon">
+            <i class="fas fa-home fa-2x"></i>
+        </a>
+
+        <form method="get" action="/">
+            <input name="kw" type="text" class="search-bar form-control" placeholder="Tìm kiếm...">
+        </form>
+        <a href="{{ url_for('cart.carts') }}" class="cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+            <span id="cart-count" class="badge badge-pill badge-danger">{{ cart_stats.total_quantity }}</span>
+        </a>
+
+        <a href="{{ url_for('user_info') }}" class="user-icon">
+            <i class="fas fa-user fa-2x"></i>
+        </a>
+
+        <!-- User Authentication Links -->
+        <div id="user-auth">
+            {% if logged_in %}
+                <!-- Show User Icon if Logged In -->
+                <a href="{{ url_for('profile') }}" class="user-icon">
+                    <i class="fas fa-user-circle fa-2x"></i>
+                </a>
+            {% else %}
+                <!-- Show Login and Register Buttons if Not Logged In -->
+                <a href="{{ url_for('login') }}" class="btn btn-primary me-2">Đăng nhập</a>
+                <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng ký</a>
+            {% endif %}
+        </div>
+    </header>
+

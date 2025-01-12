@@ -1,0 +1,268 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} Xem thông tin {% endblock %}
+
+{% block content %}
+<style>
+    .room-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.booking-section {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin-bottom: 20px;
+}
+
+.rules-table {
+    margin-top: 20px;
+}
+
+.rating-button {
+    background-color: #ffc107;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.map-section {
+    width: 100%;
+    height: 400px;
+    background-color: #e0e0e0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.comments-section {
+    margin-top: 20px;
+}
+    .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 300px;
+}
+
+.stars {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.star {
+    font-size: 30px;
+    margin: 0 5px;
+    cursor: pointer;
+    color: #ccc;
+}
+</style>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-7">
+                <div class="booking-section">
+                    <img src="{{ room.image }}" alt="Room Image" class="room-image">
+                    <h2 class="mt-3">{{ room.style_room }}</h2>
+                    <p>Giá: <strong>{{ room.price }} VNĐ
+                    <p class="card-text">Phòng số: {{room.room_number}}, Lầu: {{ room.floors.number_floor }}</p>
+                    {% if room.status == false %}
+                        <p class="card-text">Còn phòng</p>
+                    {% else %}
+                        <p class="card-text">Hết phòng</p>
+                    {% endif %}
+                    </strong></p>
+                    <input type="button"
+                               onclick="addToCart({{ room.id }})"
+                               value="Đặt Phòng"
+                               class="btn btn-primary" {% if room.status == true %}disabled{% endif %}>
+                </div>
+                <table class="table table-bordered rules-table">
+                    <thead>
+                        <tr>
+                            <th>Địa chỉ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ room.address }}</td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr>
+                            <th>Nội Quy Phòng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ room.description }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-5">
+                <div class="map-section">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.764168539956!2d106.68809457331866!3d10.675404689467303!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31753100099ce9ed%3A0xdb6079801f0735ea!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBN4bufIFRQLiBI4buTIENow60gTWluaCAoY8ahIHPhu58gMyk!5e0!3m2!1svi!2s!4v1731736557747!5m2!1svi!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+        </div>
+         <div class="comments-section mt-3">
+            <h3>Bình Luận</h3>
+            {% if current_user.is_authenticated %}
+                <textarea class="form-control" rows="2" id="comment" name="text" placeholder="Nội dung bình luận..."></textarea>
+                <button class="btn btn-info mt-1" onclick="addComment({{ room.id }})">Thêm bình luận</button>
+                <input type="hidden" id="rating-point" />
+                <button class="rating-button" onclick="addRating({{ room.id }})">Đánh giá</button>
+                {% else %}
+                <p>Vui lòng <a href="{{ url_for('login') }} ">đăng nhập</a> để bình luận!</p>
+                {% endif %}
+            <div id="comments" class="mt-3">
+                {% for c in comments %}
+                <div class="row alert alert-info">
+                    <div class="col-md-1 col-xs-4">
+                        <img src="{{ c.users.avatar or '/static/images/avatar.png' }}" class="img-fluid rounded" /> <!-- Avatar người dùng -->
+                    </div>
+                    <div class="col-md-11 col-xs-8">
+                        <p><strong>{{ c.users.username }}</strong></p>
+                        <p>{{ c.comments }}</p>
+                        <p>Bình luận lúc: <span class="date">{{ c.create_at.strftime('%Y-%m-%d %H:%M') }}</span></p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+<script>
+function addComment(roomId) {
+    const commentText = document.getElementById('comment').value;
+
+    if (!commentText.trim()) {
+        alert('Vui lòng nhập nội dung bình luận.');
+        return;
+    }
+
+    fetch('/add_comment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            comment: commentText,
+            room_id: roomId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            const commentsDiv = document.getElementById('comments');
+            const newComment = `
+                <div class="row alert alert-info">
+                    <div class="col-md-1 col-xs-4">
+                        <img src="${data.avatar}" class="img-fluid rounded" />
+                    </div>
+                    <div class="col-md-11 col-xs-8">
+                        <p><strong>${data.username}</strong></p>
+                        <p>${data.comment}</p>
+                        <p>Bình luận lúc: <span class="date">${data.created_at}</span></p>
+                    </div>
+                </div>
+            `;
+            commentsDiv.insertAdjacentHTML('beforeend', newComment);
+            document.getElementById('comment').value = ''; // Reset text
+        }
+    });
+}
+
+function addRating(roomId) {
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <h3>Đánh giá phòng</h3>
+                <div class="stars">
+                    ${[1, 2, 3, 4, 5].map(star => `
+                        <span class="star" data-point="${star}" onclick="selectStar(${star})">&#9733;</span>
+                    `).join('')}
+                </div>
+                <button class="btn btn-success" onclick="submitRating(${roomId})">Xác nhận</button>
+                <button class="btn btn-danger" onclick="closeModal()">Hủy</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function selectStar(point) {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach(star => {
+        const starPoint = parseInt(star.getAttribute('data-point'));
+        star.style.color = starPoint <= point ? 'gold' : '#ccc';
+    });
+    document.getElementById('rating-point').value = point;
+}
+
+function submitRating(roomId) {
+    const ratingPoint = parseInt(document.getElementById('rating-point').value);
+
+    if (!ratingPoint) {
+        alert('Vui lòng chọn số sao.');
+        return;
+    }
+
+    fetch('/add_rating', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            rating: ratingPoint,
+            room_id: roomId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert('Cảm ơn bạn đã đánh giá!');
+            closeModal();
+        }
+    });
+}
+
+function closeModal() {
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) modal.remove();
+}
+</script>
+
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1TzAFqgr6tiheHwb_GELoo0JQZelZbwI&callback=initMap">
+</script>
+{% endblock %}

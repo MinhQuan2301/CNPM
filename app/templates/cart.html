@@ -1,0 +1,73 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} Trang chủ {% endblock %}
+
+{% block content %}
+<style>
+.container{
+    margin-top: 20px;
+}
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.table {
+    margin-top: 20px;
+    width: 100%;
+    border: 1px solid #dee2e6;
+}
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+tfoot {
+    font-weight: bold;
+}
+
+.text-end {
+    text-align: right;
+}
+
+
+</style>
+<div class="container mt-5">
+        <h2>Giỏ hàng của bạn</h2>
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th>Hình ảnh</th>
+                    <th>Sản phẩm/Dịch vụ</th>
+                    <th>Đơn giá</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr id="cart-item-{{ room.id }}">
+                    <td><img src="{{ room.image }}" alt="{{ room.style_room }}" style="width: 100px;"></td>
+                    <td>{{ room.style_room }}</td>
+                    <td>{{ room.price }} VND</td>
+                    <td>
+                        <button onclick="removeFromCart({{ room.id }})" class="btn btn-danger">Xóa</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <tr>
+                        <td colspan="2" class="text-right"><strong>Tổng cộng:</strong></td>
+                        <td><strong id="total-price">{{ "{:,.0f}".format(total) }} VND</strong></td>
+                    </tr>
+                </tr>
+            </tfoot>
+        </table>
+        <div class="text-right">
+            <a href="{{ url_for('booking_form') }}" class="btn btn-primary mt-3">Nhập thông tin</a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock%}

@@ -1,0 +1,59 @@
+{% extends 'staff.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">Lập Phiếu Đặt Phòng</h1>
+     {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alert alert-danger" role="alert">
+          {% for category, message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+     <form id="bookingForm" method="post" action=" {{ url_for('staff_booking_room') }}">
+        <div class="form-group mt-3">
+            <label for="bookingCode">Phiếu Đặt Phòng:</label>
+            <input type="text" class="form-control" id="bookingCode" value="Phiếu đặt phòng" readonly>
+        </div>
+        <div class="form-group mt-3">
+            <label for="customerName">Họ tên khách hàng:</label>
+            <input type="text" class="form-control" id="customerName" name="customerName" placeholder="Nhập họ tên khách hàng" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="phone_number">Số điện thoại:</label>
+            <input type="number" class="form-control" id="phone_number" name="phone_number" placeholder="Nhập số điện thoại" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="cccd">CCCD:</label>
+            <input type="text" class="form-control" id="cccd" name="cccd" placeholder="Nhập số CCCD" required>
+        </div>
+         <div class="form-group mt-3">
+            <label for="customerType">Loại khách hàng:</label>
+            <select class="form-control" id="customerType" name="customerType" required>
+                <option value="" disabled selected>Chọn loại khách hàng</option>
+                <option value="domestic">Nội địa</option>
+                <option value="international">Nước ngoài</option>
+            </select>
+        </div>
+        <div class="form-group mt-3">
+            <label for="address">Địa chỉ:</label>
+            <textarea class="form-control" id="address" name="address" rows="3" placeholder="Nhập địa chỉ khách hàng" required></textarea>
+        </div>
+        <div class="form-group mt-3">
+            <label for="roomNumber">Phòng thuê:</label>
+            <input type="text" class="form-control" id="roomNumber" name="roomNumber" placeholder="Nhập số phòng" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="bookingDate">Ngày nhận phòng:</label>
+            <input type="date" class="form-control" id="bookingDate" name="bookingDate" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="checkoutDate">Ngày trả phòng:</label>
+            <input type="date" class="form-control" id="checkoutDate" name="checkoutDate" required>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Lập Phiếu Đặt Phòng</button>
+    </form>
+</div>
+{% endblock%}

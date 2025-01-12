@@ -1,0 +1,62 @@
+.login-container {
+    max-width: 400px;
+    margin: auto;
+    padding: 30px;
+    background-color: #ffffff; /* Nền trắng cho khung đăng ký */
+    border-radius: 10px; /* Bo tròn góc khung */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ nhàng */
+    margin-top: 100px;
+    border: 1px solid #007bff; /* Đường viền màu xanh dương */
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #007bff; /* Màu tiêu đề xanh dương */
+    font-size: 24px; /* Kích thước chữ lớn */
+}
+
+/* Định dạng cho các trường nhập */
+.form-label {
+    font-weight: bold;
+    color: #333; /* Màu chữ cho nhãn */
+}
+
+.form-control {
+    margin-bottom: 15px;
+    border: 1px solid #007bff; /* Đường viền màu xanh dương */
+    border-radius: 5px; /* Bo tròn góc trường nhập */
+    padding: 10px; /* Khoảng cách bên trong */
+    transition: border-color 0.3s; /* Hiệu ứng chuyển đổi khi hover */
+}
+
+.form-control:focus {
+    border-color: #0056b3; /* Đổi màu khi trường được chọn */
+    outline: none; /* Không viền ngoài khi chọn */
+    box-shadow: 0 0 5px rgba(0, 86, 179, 0.5); /* Bóng đổ nhẹ */
+}
+
+.btn-primary {
+    width: 100%;
+    background-color: #007bff; /* Màu nền nút xanh dương */
+    border: none; /* Không viền */
+    color: white; /* Màu chữ trắng */
+    padding: 10px; /* Khoảng cách bên trong nút */
+    font-size: 16px; /* Kích thước chữ lớn */
+    border-radius: 5px; /* Bo tròn góc nút */
+    transition: background-color 0.3s; /* Hiệu ứng chuyển đổi khi hover */
+}
+
+p {
+    text-align: center;
+    margin-top: 20px; /* Khoảng cách phía trên */
+}
+
+a {
+    color: #007bff; /* Màu liên kết xanh dương */
+    text-decoration: none; /* Không gạch chân */
+}
+
+a:hover {
+    text-decoration: underline; /* Gạch chân khi hover */
+}

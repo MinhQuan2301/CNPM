@@ -1,0 +1,147 @@
+{% extends 'staff.html' %}
+
+{% block content %}
+<style>
+  .search-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 30px;
+  }
+
+  .search-bar .btn {
+      font-size: 14px;
+      margin-left: 10px;
+      white-space: nowrap;
+  }
+
+  .customer-info {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 30px;
+      border: 1px solid #ddd;
+  }
+
+  .customer-info h1 {
+      font-size: 26px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #343a40;
+  }
+
+  .customer-info p {
+      font-size: 16px;
+      margin: 10px 0;
+      line-height: 1.6;
+      color: #495057;
+  }
+
+  .customer-info strong {
+      color: #007bff;
+  }
+
+  .booking-card {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-top: 30px;
+      border: 1px solid #ddd;
+  }
+
+  .booking-card h3 {
+      font-size: 22px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #007bff;
+  }
+
+  .booking-header {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+  }
+
+  .booking-header p {
+      font-size: 14px;
+      margin: 5px 0;
+      color: #495057;
+  }
+
+  .booking-details li {
+      font-size: 14px;
+      margin-bottom: 10px;
+  }
+
+  .booking-details li p {
+      margin: 5px 0;
+  }
+
+  .booking-details {
+      list-style-type: none;
+      padding-left: 0;
+  }
+
+  .booking-card ul {
+      padding-left: 20px;
+  }
+
+  .booking-details strong {
+      font-weight: bold;
+      color: #007bff;
+  }
+
+  .customer-info a {
+      color: #007bff;
+      text-decoration: none;
+  }
+
+  .customer-info a:hover {
+      text-decoration: underline;
+  }
+</style>
+
+<form method="GET" action="{{ url_for('search_customer') }}">
+    <div class="search-bar">
+        <input name="kw" type="text" class="form-control" placeholder="Tìm kiếm...">
+        <button class="btn btn-primary" type="submit">Tìm Kiếm</button>
+    </div>
+</form>
+
+{% if customer %}
+<div class="container mt-4">
+    <div class="customer-info">
+        <h1>Thông Tin Khách Hàng</h1>
+        <p><strong>Họ tên:</strong> {{ customer.fullname }}</p>
+        <p><strong>Số điện thoại:</strong> {{ customer.phone_number }}</p>
+        <p><strong>Email:</strong> {{ customer.email }}</p>
+        <p><strong>Địa chỉ:</strong> {{ customer.address }}</p>
+        <p><strong>CCCD:</strong> {{ customer.citizen_id }}</p>
+
+        <h3>Thông Tin Phiếu Đặt Phòng</h3>
+        {% for booking in customer.bookings %}
+        <div class="booking-card">
+            <div class="booking-header">
+                <p><strong>Ngày nhận phòng:</strong> {{ booking.check_in_date }}</p>
+                <p><strong>Ngày trả phòng:</strong> {{ booking.check_out_date }}</p>
+                <p><strong>Phòng:</strong> {{ booking.style_id }}</p>
+            </div>
+
+            <h4>Chi tiết phiếu đặt phòng:</h4>
+            <ul class="booking-details">
+                {% for detail in booking.booking_detail %}
+                <li>
+                    <p><strong>Số lượng khách:</strong> {{ detail.quantity_customer }}</p>
+                    <p><strong>Tổng tiền:</strong> {{ detail.total_amount }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

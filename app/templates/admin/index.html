@@ -1,0 +1,10 @@
+{% extends "admin/master.html" %}
+
+{% block body %}
+
+  {% if session.get('user_role') == 'Admin' %}
+    <h1>Chào mừng đến với trang quản trị</h1>
+  {% else %}
+    {% include "admin/login.html" %}
+  {% endif %}
+{% endblock %}

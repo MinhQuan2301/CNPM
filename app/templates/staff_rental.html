@@ -1,0 +1,75 @@
+{% extends 'staff.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">Lập Phiếu Thuê Phòng</h1>
+    <form id="rentalForm" method="POST" action=" {{ url_for('staff_rental_room') }}">
+        <div class="form-group mt-3">
+            <label for="bookingCode">Phiếu thuê phòng:</label>
+            <input type="text" class="form-control" id="bookingCode" name="booking_code" value="Phiếu thuê phòng" readonly>
+        </div>
+        <div class="form-group mt-3">
+            <label for="customerName">Họ tên khách hàng:</label>
+            <input type="text" class="form-control" id="customerName" name="customer_name" placeholder="Nhập họ tên khách hàng" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="phone_number">Số điện thoại:</label>
+            <input type="number" class="form-control" id="phone_number" name="phone_number" placeholder="Nhập số điện thoại" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="cccd">CCCD:</label>
+            <input type="text" class="form-control" id="cccd" name="cccd" placeholder="Nhập số CCCD" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="customerType">Loại khách hàng:</label>
+            <select class="form-control" id="customerType" name="customer_type" required>
+                <option value="" disabled selected>Chọn loại khách hàng</option>
+                <option value="domestic">Nội địa</option>
+                <option value="international">Nước ngoài</option>
+            </select>
+        </div>
+        <div class="form-group mt-3">
+            <label for="address">Địa chỉ:</label>
+            <textarea class="form-control" id="address" name="address" rows="3" placeholder="Nhập địa chỉ khách hàng" required></textarea>
+        </div>
+        <div class="form-group mt-3">
+            <label for="roomNumber">Phòng thuê:</label>
+            <input type="text" class="form-control" id="roomNumber" name="room_number" placeholder="Nhập số phòng" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="checkinTime">Giờ nhận phòng:</label>
+            <input type="time" class="form-control" id="checkinTime" name="checkin_time" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="bookingDate">Ngày nhận phòng:</label>
+            <input type="date" class="form-control" id="bookingDate" name="booking_date" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="checkoutDate">Ngày trả phòng:</label>
+            <input type="date" class="form-control" id="checkoutDate" name="checkout_date" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="numberOfPeople">Số lượng người:</label>
+            <input type="number" class="form-control" id="numberOfPeople" name="number_of_people" placeholder="Nhập số lượng người" min="1" required>
+        </div>
+        <div class="form-group mt-3">
+            <label for="paymentMethod">Phương thức thanh toán:</label>
+            <div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="paymentCash" value="cash" required>
+                    <label class="form-check-label" for="paymentCash">Tiền mặt</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="paymentCard" value="card" required>
+                    <label class="form-check-label" for="paymentCard">Tiền thẻ</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group mt-3">
+            <label for="price">Đơn giá:</label>
+            <input type="number" class="form-control" id="price" name="price" placeholder="Tổng tiền" min="0" step="1000" required>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Lập Phiếu Thuê Phòng</button>
+    </form>
+</div>
+{% endblock %}

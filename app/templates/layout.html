@@ -1,0 +1,64 @@
+{% extends 'layout/base.html' %}
+
+{% block title %} Trang chủ {% endblock %}
+
+{% block content %}
+<section class="intro center">
+    <h2>Chào mừng đến với Hotel Management</h2>
+</section>
+<section id="services" class="my-5">
+    <h3 class="center">Dịch vụ của chúng tôi</h3>
+    <div class="text-center mt-4">
+        <div class="col-md-4">
+            <i class="fas fa-bed fa-2x mb-2"></i>
+            <h4>Phòng nghỉ</h4>
+            <p>Phòng sạch sẽ và tiện nghi, đảm bảo giấc ngủ thoải mái cho bạn.</p>
+        </div>
+        <div class="col-md-4">
+            <i class="fas fa-utensils fa-2x mb-2"></i>
+            <h4>Nhà hàng</h4>
+            <p>Thưởng thức ẩm thực đa dạng và phong phú tại nhà hàng của chúng tôi.</p>
+        </div>
+        <div class="col-md-4">
+            <i class="fas fa-spa fa-2x mb-2"></i>
+            <h4>Spa & Thư giãn</h4>
+            <p>Thư giãn với dịch vụ spa cao cấp, mang đến trải nghiệm tuyệt vời.</p>
+        </div>
+    </div>
+</section>
+<section id="room-types" class="my-5">
+    <h3 class="center">Các loại phòng</h3>
+    <div class="row mt-4">
+        {% for p in produces %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ p.image }}" class="card-img-top" alt="Phòng Đơn">
+               <div class="card-body">
+                    <h5 class="card-title">{{ p.style_room }}</h5>
+                    <p class="card-text">{{ p.price }} VNĐ</p>
+                    {% if p.status == false %}
+                        <p class="card-text">Còn phòng</p>
+                    {% else %}
+                        <p class="card-text">Hết phòng</p>
+                    {% endif %}
+                    <div class="btn-group">
+                        <input type="button"
+                               onclick="addToCart({{ p.id }})"
+                               value="Đặt Phòng"
+                               class="btn btn-primary" {% if p.status == true %}disabled{% endif %}>
+                         <a href="{{ url_for('info_room', id=p.id) }}" class="btn btn-danger">Xem thông tin</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+     <ul class="pagination">
+        {% for i in range(pages) %}
+        <li class="page-item"><a class="page-link" href="/?page={{ i + 1}}">{{ i + 1}}</a></li>
+        {% endfor %}
+
+    </ul>
+</section>
+
+{% endblock%}

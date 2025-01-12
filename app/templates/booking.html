@@ -1,0 +1,136 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Trang chủ{% endblock %}
+
+{% block content %}
+<style>
+.container {
+    padding: 20px;
+}
+
+.form-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h2 {
+    margin-bottom: 20px;
+    color: #007bff;
+    text-align: center;
+}
+
+.form-label {
+    font-weight: bold;
+}
+.list-group-item {
+    font-size: 16px;
+}
+</style>
+
+<div class="container">
+    <div class="form-container">
+        <h2>Phiếu Đặt Phòng</h2>
+        <form action="{{ url_for('booking_form') }}" method="POST">
+            <!-- Họ tên người đặt -->
+            <div class="mb-3">
+                <label for="name" class="form-label">Họ Tên Người Đặt:</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ fullname }}" readonly>
+            </div>
+
+            <!-- Các phòng đặt -->
+            <div class="mb-3">
+                <label for="rooms" class="form-label">Các Phòng Đặt:</label>
+                <ul class="list-group">
+                    {% for room in rooms %}
+                        <li class="list-group-item">
+                            {{ room.room_number }}, {{ room.style_room }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Nhập email của bạn" required>
+            </div>
+            <div class="mb-3">
+                <label for="checkin" class="form-label">Ngày Nhận Phòng:</label>
+                <input type="date" class="form-control" id="checkin" name="checkin" required>
+            </div>
+
+            <!-- Ngày trả phòng -->
+            <div class="mb-3">
+                <label for="checkout" class="form-label">Ngày Trả Phòng:</label>
+                <input type="date" class="form-control" id="checkout" name="checkout" required>
+            </div>
+
+            <!-- Loại khách -->
+            <div class="mb-3">
+                <label for="guestType" class="form-label">Loại Khách:</label>
+                <select class="form-select" id="guestType" name="guestType" required>
+                    <option value="">-- Chọn loại khách --</option>
+                    <option value="nội địa">Nội địa</option>
+                    <option value="nước ngoài">Nước ngoài</option>
+                </select>
+            </div>
+
+            <!-- CCCD -->
+            <div class="mb-3">
+                <label for="cccd" class="form-label">CCCD:</label>
+                <input type="text" class="form-control" id="cccd" name="cccd" placeholder="Nhập số CCCD"
+                       pattern="\d{12}"
+                       title="CCCD phải gồm đúng 12 chữ số."
+                       required>
+            </div>
+
+            <!-- Địa chỉ -->
+            <div class="mb-3">
+                <label for="address" class="form-label">Địa Chỉ:</label>
+                <textarea class="form-control" id="address" name="address" rows="3" placeholder="Nhập địa chỉ" required></textarea>
+            </div>
+
+            <!-- Nút Thanh toán -->
+            <div class="text-right">
+                <button type="submit" class="btn btn-primary mt-3">Thanh toán</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+     document.getElementById('paymentButton').addEventListener('click', function (event) {
+        const checkin = document.getElementById('checkin').value.trim();
+        const checkout = document.getElementById('checkout').value.trim();
+        const guestType = document.getElementById('guestType').value.trim();
+        const cccd = document.getElementById('cccd').value.trim();
+        const address = document.getElementById('address').value.trim();
+
+        if (!checkin || !checkout || !guestType || !cccd || !address) {
+            alert("Vui lòng điền đầy đủ thông tin trước khi thanh toán.");
+            event.preventDefault(); // Ngăn chuyển hướng
+            return;
+        }
+
+        if (!/^\d{12}$/.test(cccd)) {
+            alert("CCCD phải gồm đúng 12 chữ số.");
+            event.preventDefault();
+            return;
+        }
+
+        const checkinDate = new Date(checkin);
+        const checkoutDate = new Date(checkout);
+        if (checkoutDate <= checkinDate) {
+            alert("Ngày trả phòng phải sau ngày nhận phòng.");
+            event.preventDefault();
+            return;
+        }
+
+        // Nếu tất cả hợp lệ, không gọi event.preventDefault(), cho phép chuyển hướng
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

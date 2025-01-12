@@ -1,0 +1,19 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container">
+   {% if is_user_role %}
+    <h2>Thông tin tài khoản</h2>
+    <ul>
+        <li><strong>Họ tên:</strong> {{ current_user.fullname }}</li>
+        <li><strong>Tên đăng nhập:</strong> {{ current_user.username }}</li>
+        <li><strong>Email:</strong> {{ current_user.email }}</li>
+        <li><strong>Ngày tạo:</strong> {{ current_user.create_at.strftime('%d/%m/%Y %H:%M:%S') }}</li>
+        <li><strong>Địa chỉ:</strong> {{ current_user.address or "Chưa cập nhật" }}</li>
+    </ul>
+    <a href="{{ url_for('logout_user') }}" class="btn btn-danger">Đăng xuất</a>
+   {% else %}
+    <h2>Bạn chưa đăng nhập</h2>
+   {% endif %}
+</div>
+{% endblock %}

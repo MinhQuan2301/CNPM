@@ -1,0 +1,87 @@
+{% extends 'staff.html' %}
+
+{% block content %}
+
+ <style>
+        .room-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .status {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .status.available {
+            color: green;
+        }
+        .status.unavailable {
+            color: red;
+        }
+        .setup-buttons {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+   <div class="container mt-4">
+    <h1 class="text-center">Danh Sách Phòng</h1>
+    <div class="row">
+        {% for p in produces %}
+        <div class="col-md-4">
+            <div class="room-card">
+                <h3>{{ p.room_number }}</h3>
+                {% if not p.status %}
+                    <p class="status available">Còn phòng</p>
+                {% else %}
+                    <p class="status unavailable">Hết phòng</p>
+                {% endif %}
+                <button class="btn btn-warning btn-sm setup-btn" onclick="toggleSetupButtons({{ p.id }})">Set up</button>
+                <div class="setup-buttons" id="setup-buttons-{{ p.id }}" style="display:none;">
+                    <button class="btn btn-success btn-sm" onclick="updateRoomStatus({{ p.id }}, false)">Còn phòng</button>
+                    <button class="btn btn-danger btn-sm" onclick="updateRoomStatus({{ p.id }}, true)">Hết phòng</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Hàm toggle để hiện/ẩn các nút setup
+    function toggleSetupButtons(roomId) {
+        var buttons = document.getElementById('setup-buttons-' + roomId);
+        buttons.style.display = (buttons.style.display === 'none') ? 'block' : 'none';
+    }
+
+    // Hàm cập nhật trạng thái phòng
+    function updateRoomStatus(roomId, status) {
+        fetch('/update-room-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                room_id: roomId,
+                status: status
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === "Room status updated successfully") {
+                alert("Cập nhật trạng thái phòng thành công!");
+                location.reload();  // Làm mới trang để cập nhật trạng thái phòng
+            } else {
+                alert("Có lỗi xảy ra!");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Có lỗi xảy ra!");
+        });
+    }
+</script>
+{% endblock%}

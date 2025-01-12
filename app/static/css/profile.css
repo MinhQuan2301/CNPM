@@ -1,0 +1,45 @@
+
+.container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Thông tin người dùng */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.profile-image img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.profile-details h4 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.profile-details p {
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+/* Nút hành động */
+.text-end .btn {
+    margin-left: 10px;
+    width: 150px;
+}

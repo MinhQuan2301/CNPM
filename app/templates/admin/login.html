@@ -1,0 +1,22 @@
+<form  method="post" action=" {{ url_for('admin_login') }}">
+    <h2>Login</h2>
+    <div class="mb-3 mt-3">
+        <i class="fa fa-user"></i>
+        <label class="form-label" for="username">Username</label>
+        <input class="form-control" id="username" name="username" placeholder="Nhập Username" required="" type="text"/>
+    </div>
+    <div class="mb-3">
+        <i class="fa fa-lock"></i>
+        <label class="form-label" for="password">Password</label>
+        <input class="form-control" id="password" name="password" placeholder="Nhập Mật Khẩu" required=""
+               type="password"/>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" id="warn" style="display: none;">
+        <button class="close" data-dismiss="alert" type="button">×</button>
+        <strong><i class="fa fa-exclamation-triangle"></i>
+        </strong> Tài Khoản Hoặc Mật Khẩu Không Đúng!
+    </div>
+    <input class="btn btn-primary" type="submit" value="Login"/>
+</form>
+
+
