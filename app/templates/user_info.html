@@ -2,18 +2,29 @@
 
 {% block content %}
 <div class="container">
-   {% if is_user_role %}
-    <h2>Thông tin tài khoản</h2>
-    <ul>
-        <li><strong>Họ tên:</strong> {{ current_user.fullname }}</li>
-        <li><strong>Tên đăng nhập:</strong> {{ current_user.username }}</li>
-        <li><strong>Email:</strong> {{ current_user.email }}</li>
-        <li><strong>Ngày tạo:</strong> {{ current_user.create_at.strftime('%d/%m/%Y %H:%M:%S') }}</li>
-        <li><strong>Địa chỉ:</strong> {{ current_user.address or "Chưa cập nhật" }}</li>
-    </ul>
-    <a href="{{ url_for('logout_user') }}" class="btn btn-danger">Đăng xuất</a>
-   {% else %}
-    <h2>Bạn chưa đăng nhập</h2>
-   {% endif %}
+    {% if user_info and user_info.source == "google" %}  {# Nếu đăng nhập bằng Google #}
+        <h2>Thông tin tài khoản Google</h2>
+        <ul>
+            <li><strong>Họ tên:</strong> {{ user_info.fullname }}</li>
+            <li><strong>Email:</strong> {{ user_info.email }}</li>
+            <li><strong>Ảnh đại diện:</strong> <img src="{{ user_info.avatar }}" alt="Avatar" width="100"></li>
+        </ul>
+        <a href="{{ url_for('google.logout') }}" class="btn btn-danger">Đăng xuất (Google)</a>
+
+    {% elif user_info and user_info.source == "system" %}  {# Nếu đăng nhập từ CSDL #}
+        <h2>Thông tin tài khoản</h2>
+        <ul>
+            <li><strong>Họ tên:</strong> {{ user_info.fullname }}</li>
+            <li><strong>Tên đăng nhập:</strong> {{ user_info.username }}</li>
+            <li><strong>Email:</strong> {{ user_info.email }}</li>
+            <li><strong>Ngày tạo:</strong> {{ user_info.create_at }}</li>
+            <li><strong>Địa chỉ:</strong> {{ user_info.address or "Chưa cập nhật" }}</li>
+        </ul>
+        <a href="{{ url_for('logout_user') }}" class="btn btn-danger">Đăng xuất (Hệ thống)</a>
+
+    {% else %}  {# Nếu chưa đăng nhập #}
+        <h2>Bạn chưa đăng nhập</h2>
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Đăng nhập</a>
+    {% endif %}
 </div>
 {% endblock %}

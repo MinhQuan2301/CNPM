@@ -19,3 +19,7 @@ MAIL_DEBUG = False
 MAIL_USERNAME = "quantran.23012003@gmail.com"
 MAIL_PASSWORD = "pvvn zrsq uabb iefp"
 
+GEMINI_API_KEY="AIzaSyAFcnjvOHw6tuH4WTuvwgNL2lgAhD1K6ls"
+GOOGLE_CLIENT_ID="1082030793432-avmt55u1uepplcjvarn8veap8a8a13ed.apps.googleusercontent.com"
+
+

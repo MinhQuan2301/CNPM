@@ -7,7 +7,7 @@ from flask_mail import Mail, Message
 import requests
 from datetime import datetime
 from django.http import JsonResponse
-from flask import Blueprint, request, redirect, render_template, session
+from flask import Blueprint, request, redirect, render_template, session, flash, url_for
 from flask_login import login_required, current_user
 from app import config, db, app, mail
 from app.config import redis_client
@@ -27,15 +27,33 @@ def hmacsha512(key, data):
 
 
 @vnpay.route('/vnpay', methods=['GET', 'POST'])
-@login_required
 def payment():
+    # Kiểm tra đăng nhập từ hệ thống hoặc Google
+    is_authenticated_system = current_user.is_authenticated
+    is_authenticated_google = session.get("google_id") is not None
+
+    if not (is_authenticated_system or is_authenticated_google):
+        flash("Bạn cần đăng nhập để thanh toán.", "warning")
+        return redirect(url_for('login_user'))
+
+    # Debug session để kiểm tra
+    print("Session data in payment:", session)
+
     if request.method == 'POST':
         form = PaymentForm(request.form)
         if form.validate_on_submit():
+            # Lấy dữ liệu từ session
+            user_id = session.get('payment_user_id')
+            order_id = session.get('order_id')
+            total_amount = session.get('total_amount')
+
+            if not all([user_id, order_id, total_amount]):
+                flash("Thông tin thanh toán không hợp lệ!", "error")
+                return redirect(url_for('login_user'))
+
             # Lấy dữ liệu từ form
             order_type = form.order_type.data.strip()
-            order_id = str(form.order_id.data).strip()
-            amount = int(form.amount.data)
+            amount = int(total_amount)  # Sử dụng total_amount từ session
             order_desc = form.order_desc.data.strip()
             bank_code = form.bank_code.data.strip() if form.bank_code.data else ''
             language = form.language.data.strip() if form.language.data else 'vn'
@@ -50,6 +68,7 @@ def payment():
             print(f"bank_code: {bank_code}")
             print(f"language: {language}")
             print(f"ipaddr: {ipaddr}")
+            print(f"user_id: {user_id}")  # Debug user_id
 
             # Khởi tạo thanh toán VNPay
             vnp = vnpay_order()
@@ -130,8 +149,20 @@ def payment_ipn():
 
     return result
 
+
 @vnpay.route("/payment_return", methods=["GET"])
 def payment_return():
+    # Kiểm tra đăng nhập từ hệ thống hoặc Google
+    is_authenticated_system = current_user.is_authenticated
+    is_authenticated_google = session.get("google_id") is not None
+
+    if not (is_authenticated_system or is_authenticated_google):
+        flash("Bạn cần đăng nhập để xem kết quả thanh toán.", "warning")
+        return redirect(url_for('login_user'))
+
+    # Debug session để kiểm tra
+    print("Session data in payment_return:", session)
+
     try:
         inputData = request.args
         if not inputData:
@@ -139,6 +170,7 @@ def payment_return():
                                    title="Kết quả thanh toán",
                                    result="Lỗi",
                                    msg="Không nhận được dữ liệu thanh toán")
+
         # Lấy thông tin từ inputData
         vnp = vnpay_order()
         vnp.responseData = inputData.to_dict()
@@ -173,17 +205,37 @@ def payment_return():
                                    msg="Không tìm thấy thông tin đặt phòng hoặc phiên đặt phòng đã hết hạn")
 
         booking_data = json.loads(booking_data_json)
+        print(f"Booking data found for user_id: {user_id}, order_id: {order_id}")
 
         if vnp.validate_response(config.VNPAY_HASH_SECRET_KEY):
             if vnp_ResponseCode == "00":
                 try:
+                    # Kiểm tra user_id từ booking_data để xử lý cho cả hệ thống và Google
+                    if user_id.startswith('google_'):
+                        # Xử lý tài khoản Google
+                        google_id = user_id.replace('google_', '')
+                        # Kiểm tra session để đảm bảo tài khoản Google còn hợp lệ
+                        if not session.get("google_id") or session.get("google_id") != google_id:
+                            flash("Phiên đăng nhập Google không hợp lệ hoặc đã hết hạn.", "error")
+                            return redirect(url_for('login_user'))
+                        # Giả sử bạn không cần tìm User trong DB cho Google, chỉ cần sử dụng thông tin từ session
+                        user_email = booking_data.get('email') or booking_data.get('fullname')
+                    else:
+                        # Xử lý tài khoản hệ thống
+                        user = User.query.get(int(user_id))
+                        if user:
+                            user_email = user.email or booking_data.get('email') or booking_data.get('fullname')
+                        else:
+                            user_email = booking_data.get('email') or booking_data.get('fullname')
+
                     # Tạo booking mới
                     new_booking = Booking(
                         check_in_date=datetime.strptime(booking_data['checkin'], '%Y-%m-%d').date(),
                         check_out_date=datetime.strptime(booking_data['checkout'], '%Y-%m-%d').date(),
                         check_in_time=datetime.now().time(),
                         customer_stype=booking_data['guestType'],
-                        user_id=int(user_id),  # Sử dụng user_id đã tìm được
+                        user_id=int(user_id) if not user_id.startswith('google_') else None,
+                        # Chỉ lưu user_id cho hệ thống
                         payment_method_id=1,  # ID của VNPAY
                         style_id=1  # ID của Phiếu đặt phòng
                     )
@@ -191,29 +243,30 @@ def payment_return():
                     db.session.add(new_booking)
                     db.session.flush()  # Để lấy new_booking.id
 
-                    try:
-                        user = User.query.get(int(user_id))
-                        if user:
-                            # Lấy dữ liệu từ booking_data
-                            citizen_id = booking_data.get('cccd')
-                            address_value = request.form.get('address') or booking_data.get('address')
+                    if not user_id.startswith('google_'):
+                        try:
+                            user = User.query.get(int(user_id))
+                            if user:
+                                # Lấy dữ liệu từ booking_data
+                                citizen_id = booking_data.get('cccd')
+                                address_value = booking_data.get('address')
 
-                            # Cập nhật CCCD nếu tồn tại
-                            if citizen_id:
-                                user.citizen_id = citizen_id
+                                # Cập nhật CCCD nếu tồn tại
+                                if citizen_id:
+                                    user.citizen_id = citizen_id
 
-                            # Cập nhật địa chỉ nếu tồn tại
-                            if address_value:
-                                user.address = address_value
+                                # Cập nhật địa chỉ nếu tồn tại
+                                if address_value:
+                                    user.address = address_value
 
-                            # Lưu thay đổi vào cơ sở dữ liệu
-                            db.session.commit()
-                            print("Cập nhật thông tin người dùng thành công.")
-                        else:
-                            print(f"Không tìm thấy user với ID: {user_id}")
-                    except Exception as e:
-                        db.session.rollback()  # Rollback nếu có lỗi
-                        print(f"Lỗi khi cập nhật thông tin người dùng: {str(e)}")
+                                # Lưu thay đổi vào cơ sở dữ liệu
+                                db.session.commit()
+                                print("Cập nhật thông tin người dùng thành công.")
+                            else:
+                                print(f"Không tìm thấy user với ID: {user_id}")
+                        except Exception as e:
+                            db.session.rollback()  # Rollback nếu có lỗi
+                            print(f"Lỗi khi cập nhật thông tin người dùng: {str(e)}")
 
                     # Tạo booking detail cho từng phòng
                     for room in booking_data['rooms']:
@@ -230,7 +283,7 @@ def payment_return():
                             room_to_update.status = True
                             db.session.add(room_to_update)
                     db.session.commit()
-                    user_email = booking_data.get('email') or booking_data.get('fullname')
+
                     if user_email:
                         try:
                             msg = Message(
@@ -239,11 +292,11 @@ def payment_return():
                                 recipients=[user_email]
                             )
                             msg.html = f'''
-                                                <div style="text-align: center;">
-                                                    <h3>Bạn đã đặt phòng thành công!</h3>
-                                                    <p>Mã đặt phòng của bạn là: #{new_booking.id}</p>
-                                                </div>
-                                                '''
+                                            <div style="text-align: center;">
+                                                <h3>Bạn đã đặt phòng thành công!</h3>
+                                                <p>Mã đặt phòng của bạn là: #{new_booking.id}</p>
+                                            </div>
+                                            '''
                             mail.send(msg)
                             print("Email xác nhận đã được gửi thành công.")
                         except Exception as e:
@@ -251,9 +304,9 @@ def payment_return():
 
                     # Xóa dữ liệu Redis và session
                     redis_client.delete(f"booking_data:{user_id}")
-                    session.pop('booking_data', None)
-                    session.pop('total_amount', None)
+                    session.pop('payment_user_id', None)
                     session.pop('order_id', None)
+                    session.pop('total_amount', None)
                     session.pop('cart', None)
 
                     return render_template("payment_return.html",

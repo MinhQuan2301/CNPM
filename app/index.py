@@ -11,8 +11,8 @@ import dao
 from flask import request
 
 from admin import *
-from app import LoginManager, app
-from app.config import redis_client
+from app import LoginManager, app, config
+from app.config import redis_client, GOOGLE_CLIENT_ID
 from app.vnpays.forms import PaymentForm
 
 
@@ -78,8 +78,18 @@ def info_room(id):
 
 
 @app.route('/vnpay_info', methods=['GET', 'POST'])
-@login_required
 def vnpay_info():
+    # Kiểm tra đăng nhập từ hệ thống hoặc Google
+    is_authenticated_system = current_user.is_authenticated
+    is_authenticated_google = session.get("google_id") is not None
+
+    if not (is_authenticated_system or is_authenticated_google):
+        flash("Bạn cần đăng nhập để thanh toán.", "warning")
+        return redirect(url_for('login_user'))
+
+    # Debug session để kiểm tra
+    print("Session data in vnpay_info:", session)
+
     cart = session.get('cart', [])
     if not cart:
         flash("Giỏ hàng của bạn đang trống!", "warning")
@@ -92,8 +102,14 @@ def vnpay_info():
     # Tạo một order_id duy nhất từ thời gian hiện tại
     order_id = str(int(time.time()))
 
+    # Lấy hoặc xác định user_id từ session
+    user_id = session.get('payment_user_id')
+    if not user_id:
+        flash("Thông tin người dùng không hợp lệ!", "error")
+        return redirect(url_for('login_user'))
+
     # Lưu các thông tin quan trọng vào session
-    session['payment_user_id'] = current_user.id
+    session['payment_user_id'] = user_id
     session['total_amount'] = total_amount
     session['order_id'] = order_id
     session.modified = True
@@ -110,11 +126,34 @@ def payment_success():
 
 @app.route('/booking', methods=['GET', 'POST'])
 def booking_form():
-    # Kiểm tra quyền User
-    user_roles = [role.position for role in current_user.roles]
-    if 'User' not in user_roles:
-        flash("Bạn cần đăng nhập bằng tài khoản có quyền User để đặt phòng.", "warning")
+    # Kiểm tra đăng nhập từ hệ thống hoặc Google
+    is_authenticated_system = current_user.is_authenticated
+    is_authenticated_google = session.get("google_id") is not None
+
+    if not (is_authenticated_system or is_authenticated_google):
+        flash("Bạn cần đăng nhập để đặt phòng.", "warning")
         return redirect(url_for('login', next=request.url))
+
+    # Kiểm tra quyền User cho cả hai loại tài khoản
+    is_user_role = False
+    user_id = None
+    fullname = None
+
+    if is_authenticated_system:
+        # Kiểm tra quyền User từ tài khoản hệ thống
+        user_roles = [role.position for role in current_user.roles]  # Giả sử có roles
+        is_user_role = 'User' in user_roles
+        user_id = current_user.id
+        fullname = current_user.fullname
+    elif is_authenticated_google:
+        # Giả sử tài khoản Google luôn có quyền User (hoặc cần kiểm tra thêm logic)
+        is_user_role = True  # Bạn có thể thêm logic kiểm tra quyền cho Google nếu cần
+        user_id = session.get("google_id")  # Sử dụng google_id làm user_id cho Google
+        fullname = session.get("name")  # Lấy họ tên từ session Google
+
+    if not is_user_role:
+        flash("Bạn cần đăng nhập bằng tài khoản có quyền User để đặt phòng.", "warning")
+        return redirect(url_for('login_user', next=request.url))
 
     # Kiểm tra giỏ hàng
     cart = session.get('cart', [])
@@ -134,13 +173,13 @@ def booking_form():
 
         # Lấy thông tin từ form
         booking_data = {
-            'user_id': current_user.id,
+            'user_id': user_id,  # Sử dụng user_id chung cho cả hệ thống và Google
             'checkin': request.form.get('checkin'),
             'checkout': request.form.get('checkout'),
             'guestType': request.form.get('guestType'),
             'cccd': request.form.get('cccd'),
             'address': request.form.get('address'),
-            'fullname': current_user.fullname,
+            'fullname': fullname,  # Sử dụng fullname từ tài khoản tương ứng
             'email': email_from_form,
             'total_amount': total_amount,
             'rooms': [{
@@ -156,13 +195,13 @@ def booking_form():
 
         # Lưu vào Redis với thời gian hết hạn 24 giờ
         redis_client.set(
-            f"booking_data:{current_user.id}",
+            f"booking_data:{user_id}",  # Sử dụng user_id chung
             json.dumps(booking_data),
-            ex=3600  # 24 giờ
+            ex=86400  # 24 giờ
         )
 
         # Lưu các thông tin quan trọng vào session
-        session['payment_user_id'] = current_user.id
+        session['payment_user_id'] = user_id
         session['order_id'] = order_id
         session['total_amount'] = total_amount
         session.permanent = True  # Kéo dài thời gian session
@@ -172,8 +211,7 @@ def booking_form():
     # GET request: hiển thị form
     return render_template('booking.html',
                            rooms=rooms,
-                           fullname=current_user.fullname)
-
+                           fullname=fullname)
 @app.route('/user/login', methods=['POST'])
 def user_login():
     username = request.form.get('username')
@@ -192,12 +230,31 @@ def user_login():
 
 @app.route('/user_info')
 def user_info():
+    user_info = None
+    is_user_role = False
+
+    # Kiểm tra đăng nhập từ tài khoản hệ thống (Flask-Login)
     if current_user.is_authenticated:
-        user_roles = [role.position for role in current_user.roles]
-        is_user_role = 'User' in user_roles  # Kiểm tra xem có role 'User' không
-        return render_template('user_info.html', is_user_role=is_user_role)
-    else:
-        return render_template('user_info.html', is_user_role=False)
+        user_roles = [role.position for role in current_user.roles]  # Giả sử có roles
+        is_user_role = 'User' in user_roles
+        user_info = {
+            "fullname": current_user.fullname,
+            "username": current_user.username,
+            "email": current_user.email,
+            "create_at": current_user.create_at.strftime('%d/%m/%Y %H:%M:%S'),
+            "address": current_user.address or "Chưa cập nhật",
+            "source": "system"  # Xác định nguồn dữ liệu
+        }
+    # Kiểm tra đăng nhập từ Google (dựa vào session)
+    elif session.get("google_id"):
+        user_info = {
+            "fullname": session.get("name"),
+            "email": session.get("email"),
+            "avatar": session.get("picture"),
+            "source": "google"  # Xác định nguồn dữ liệu
+        }
+
+    return render_template('user_info.html', user_info=user_info, is_user_role=is_user_role)
 
 
 @app.route('/add_comment', methods=['POST'])
@@ -257,9 +314,11 @@ def add_rating():
 #     return render_template('room_detail.html', room=room, comments=comments)
 
 
-@app.route('/login_user')
+@app.route('/login')
 def login():
-    return render_template('login.html')
+    if "google_id" in session:
+        return redirect("/")  # Nếu đã đăng nhập, chuyển về trang chủ
+    return render_template('login.html', client_id=GOOGLE_CLIENT_ID)
 
 
 @app.route('/register')
